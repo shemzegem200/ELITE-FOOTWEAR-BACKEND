@@ -1,0 +1,389 @@
+/*FONT DEFINITIONS*/
+@font-face {
+  font-family: 'nike-font';
+  font-style: normal;
+  src: url("./fonts/Nike-Futura-ot-300.woff2") format('woff2');
+}
+@font-face {
+  font-family: 'regular-font';
+  font-style: normal;
+  src: url("./fonts/HelveticaNowText.woff2") format('woff2');
+}
+
+
+/* MAIN BODY & LAYOUT STYLING */
+* {
+  box-sizing: border-box;
+}
+main {
+  width: 100%;
+  margin: 0 auto;
+}
+body {
+  background-color: white;
+  color: black;
+  overflow-y: scroll;
+}
+.outer-container {
+  background-color: white;
+  width: 80%;
+  margin-left: 50%;
+  transform: translateX(-50%);
+  margin-top: 65px;
+  height: calc(100vh - 65px);
+}
+
+
+/* HEADER STYLING */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: white;
+  height: 65px;
+  padding: 10px;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  left: 0;
+  border-top: 8px solid rgb(111, 111, 111);
+  z-index: 100;
+  transition: top 0.3s;
+  box-shadow: rgba(193, 193, 193, 0.8) 0 0 90px 33px
+}
+header .header-logo {
+  font-family: 'nike-font';
+  font-size: 1.3rem;
+}
+header nav {
+  margin-right: 15px;
+  font-family: 'regular-font';
+  display: flex;
+  gap: 20px;
+  /* grid-template-columns: repeat(8, minmax(80px, 1fr)); */
+}
+header nav .icon-link{
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  border-radius: 50%;
+}
+header nav .icon-link:hover{
+  background-color: #cecece;
+}
+header nav a, header a {
+  text-decoration: none;
+  color: black;
+}
+
+header nav a:hover {
+  text-decoration: underline;
+  font-weight: bold;
+}
+
+
+/* INDEX PAGE STYLING */
+.index-page-top-section {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.index-page-img {
+  height: auto;
+  /* width: 891px; */
+  width: 500px;
+  z-index: 0;
+}
+
+.shoe-text{
+  position: absolute;
+  z-index: 1;
+  top: 13px;
+  width: 610px;
+  height: 80px;
+}
+
+
+/* CARD STYLING */
+.column {
+  width: 25%;
+  min-width: 250px;
+  float: left;
+  padding: 15px;
+}
+
+.shoe-card {
+  text-align: center;
+  padding: 10px 10px;
+}
+
+.shoe-card img {
+  height: 300px;
+  width: 100%;
+}
+
+.shoe-card:hover {
+  background-color: rgb(211, 211, 211);
+  cursor: pointer;
+}
+
+
+/*SHOE PAGE STYLING*/
+.shoe-page-outer-grid{
+  margin-top: 100px;
+  width: 90%;
+  display: grid;
+  /* grid-template-columns: 80px 1fr 1fr; */
+  grid-template-columns: 80px auto 1fr;
+  grid-gap: 17px;
+}
+.shoe-page-photos{
+  overflow: hidden;
+}
+.shoe-page-outer-grid .shoe-page-photos .shoe-thumbnail{
+  width: 80px;
+  height: 80px;
+  border-radius: 7px;
+  object-fit: cover;
+}
+.shoe-page-outer-grid .shoe-page-photos .shoe-thumbnail:hover{
+  opacity: 0.5;
+  transition-duration: 0.1s;
+}
+.shoe-page-outer-grid .shoe-page-left{
+  /*new added*/
+        width: auto;
+        max-width: 500px;
+  /*new added*/
+  position: relative;
+}
+.shoe-large-thumbnail{
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  z-index: 0;
+}
+.topdiv{
+  font-family: 'regular-font';
+}
+.shoe-page-right{
+  /* text-align: center; */
+  margin-left: 20px;
+  display: block;
+  /*new added*/
+        height: calc(100vh - 150px);
+        overflow-y: auto;
+  /*new added*/
+}
+.size-cards-divs{
+  margin-top: 5px;
+  display: grid;
+  grid-gap: 10px;
+  grid-template-columns: 1fr 1fr 1fr;
+  width: 100%;
+  height: auto;
+}
+.size-card{
+  padding: 3px 0;
+  height: 45px;
+}
+
+.shoe-page-right .size-card button{
+  font-family: 'regular-font';
+  background-color: white;
+  border: 1px solid rgb(212, 212, 212);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  height: 35px;
+  box-shadow: none;
+  border-radius: 6px;
+  cursor: pointer;
+  height: 45px;
+}
+.shoe-page-right .size-card button:hover{
+  border: 1px solid black;
+  transition: 0.06s;
+}
+.bottomdiv{
+  margin-top: 30px;
+  font-family: 'regular-font';
+  line-height-step: 200%;
+}
+
+
+/*LOGIN & REGISTER PAGE STYLING*/
+.login h1, .register h1{
+  text-align: center;
+  font-family: 'nike-font';
+  margin-top: 100px;
+}
+form.login, form.register{
+  max-width: 400px;
+  margin: 0 auto;
+  font-family: 'regular-font';
+  font-size: 1rem;
+}
+.login input, .register input{  
+  display: block;
+  margin-bottom: 15px;
+  width: 100%;
+  height: 38px;
+  padding: 8px 14px;
+  border: 2px solid #ddd;
+  background-color: #ffffff;
+  border-radius: 22px;
+}
+.login button, .register button{
+  width: 60%;
+  height: 38px;
+  display: block;
+  padding: 5px 8px;
+  border-radius: 22px;
+  background-color: #555;
+  color: white;
+  margin: 0 auto;
+  font-family: 'nike-font';
+  cursor: pointer;
+}
+
+
+/*SEARCH IN SHOP PAGE STYLING*/
+.search-shoe{
+  margin-bottom: 30px;
+  margin-top: 20px;
+  width: 40%;
+  margin-left: 30%;
+}
+
+
+/*CONTACT US PAGE STYLING*/
+.emailform{
+  padding: 15px;
+  border-radius: 14px;
+  border: 1px #b3b3b3 solid;
+  width: 50%;
+  margin-left: 25%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.emailform label{
+  font-family: 'regular-font';
+}
+.email-form-data-input-section{
+  width: 100%;
+}
+.email-form-data-input-section input{
+  border-radius: 12px;
+  background-color: whitesmoke;
+  border: none;
+  outline: none;
+  height: 35px;
+  width: 45%;
+  padding: 10px;
+}
+.email-form-data-input-section input:focus{
+  border: 1px #ccc solid;
+}
+.submit-contact-form{
+  cursor: pointer;
+  margin-top: 60px;
+  margin-bottom: 30px;
+  border-radius: 12px;
+  background-color: #555;
+  outline: none;
+  width: 100%;
+  height: 35px;
+  color: white;
+  align-self: flex-end;
+  font-family: 'nike-font';
+}
+
+
+/*CART STYLING*/
+.cart-container{
+  padding: 15px;
+  width: 60%;
+  margin-left: 20%;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  border: 1px #b3b3b3 solid;
+}
+.cart-list-item{
+  margin-top: 10px;
+  grid-gap: 5px;
+  height: 80px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 80px 1fr /*120px*/ 120px 50px;
+  border-radius: 7px;
+  overflow: hidden;
+}
+.cart-list-item img{
+  object-fit: contain;
+  overflow: hidden;
+  width: 100%;
+  border-radius: 7px;
+}
+.empty-cart img{
+  opacity: 60%;
+  width: 26%;
+  margin-left: 37%;
+}
+.empty-cart{
+  color: #b3b3b3;
+}
+
+
+/*POPUP STYLING*/
+.popup-content {
+  position: fixed;
+  top: 0;
+  left: 20%;
+  width: 60%;
+  height: 100%;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+
+/*ADMIN FEATURES STYLING*/
+
+.cust-list-item{
+  margin-top: 10px;
+  grid-gap: 5px;
+  height: 50px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 50px 1fr 1fr 120px 200px;
+  border-radius: 7px;
+  overflow: hidden;
+}
+.ord-list-item{
+  margin-top: 10px;
+  grid-gap: 5px;
+  height: 50px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 50px 1fr 1fr 120px 70px 120px 120px;
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.adminbuttoncontainer{
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  height:70%;
+  margin-top: 15%;
+  grid-gap:25px;
+}

@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import React, {useEffect} from 'react';
 import './App.css';
 import { Layout } from './Layout.js';
@@ -17,12 +17,20 @@ import { AllCustomers } from './AdminPages/AllCustomers.js';
 import { AllOrders } from './AdminPages/AllOrders.js';
 import { AddItemPage } from './AdminPages/AddItemPage.js';
 import { DelItemPage } from './AdminPages/DelItemPage.js';
+import {ShowPopPage} from './AdminPages/ShowPopPage.js'
+import toast from 'react-hot-toast';
+import { UpdateItemPage } from './AdminPages/UpdateItemPage.js';
+import { LoadingSpinner } from './components/LoadingSpinner.js';
 
 
 export const UserContext = createContext();
+export const UserInfoIntervalContext = createContext();
 
 
 function App() {
+  let userInfoInterval;
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
   //function to obtain cookie value
   function getCookie(cookieName) {
@@ -39,27 +47,70 @@ function App() {
     return null;
   }
 
-  //this happens whenever the page is loaded
+  //check if session is still valid
   useEffect(() => {
-      const myCookieValue = getCookie('token');
-      if (myCookieValue===null || myCookieValue==='') return;
+    const myCookieValue = getCookie('token');
+    if (myCookieValue === null || myCookieValue === '') return;
 
-      console.log('im here');
-      fetch("http://localhost:4000/api/profile", {
+    fetch("http://localhost:4000/api/profile", {
         credentials: 'include'
-      })
-      .then((response) => {
-        response.json().then( userInfo => {
-          setUserInfo(userInfo);
-        })
-      });
-  }, []);
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Session expired...login again`);
+        }
+        return response.json();
+    })
+    .then(userInfo => {
+        setUserInfo(userInfo);
+        navigate(userInfo.email === 'admin@gmail.com' ? "/admin" : "/");
+        startSendingUserInfo(userInfo);
+    })
+    .catch(error => {
+        console.log('Error fetching profile:', error);
+        toast.error(`Error: ${error.message}`);
+        navigate("/login");
+    });
+}, []);
+
+
+  // Function to send user information to the server
+const sendUserInfo = async (userInfo) => {
+  try {
+    await fetch('http://localhost:4000/api/particularcustomer', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userInfo),
+    });
+  } catch (error) {
+    console.error('Error sending user info:', error);
+  }
+};
+
+// Start sending user info at regular intervals
+const startSendingUserInfo = (userInfo) => {
+  // Send user info every 5 minutes (300000 milliseconds)
+  userInfoInterval = setInterval(() => {
+    sendUserInfo(userInfo);
+  }, 300000);
+};
+
+  // Stop sending user info
+const stopSendingUserInfo = () => {
+    if (userInfoInterval) {
+    clearInterval(userInfoInterval);
+    }
+};
 
   const [userInfo, setUserInfo] = useState({});
 
   return (
     <>
+    {isLoading && <LoadingSpinner/>}
     <UserContext.Provider value={{userInfo, setUserInfo}}>
+      <UserInfoIntervalContext.Provider value={{userInfoInterval, sendUserInfo, startSendingUserInfo, stopSendingUserInfo}}>
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<IndexPage />} />
@@ -71,17 +122,22 @@ function App() {
           <Route path='/contactus' element={<ContactPage/>} />
           <Route path='/viewcart' element={<CartPage/>} />
           <Route path='/favorites' element={<FavoritesPage/>} />
-          <Route path='/admin' element={<MainPage/>} />
+          {/* <Route path='/admin' element={<MainPage/>} /> */}
           { userInfo.email==='admin@gmail.com' &&
-          <>
-            <Route path='/all-cust' element={<AllCustomers/>} />
-            <Route path='/all-orders' element={<AllOrders/>} />
-            <Route path='/add-item' element={<AddItemPage/>} />
-            <Route path='/del-item' element={<DelItemPage/>} />
-          </>
+            <Route path="/admin" element={<MainPage/>}>
+              <Route index element={<AllCustomers/>}/>
+              <Route path='all-cust' element={<AllCustomers/>} />
+              <Route path='all-orders' element={<AllOrders/>} />
+              <Route path='add-item' element={<AddItemPage/>} />
+              <Route path='upd-item' element={<UpdateItemPage/>} />
+              <Route path='del-item' element={<DelItemPage/>} />
+              <Route path='show-pop' element={<ShowPopPage/>} />
+            </Route>
           }
-        </Route>
+    
+    </Route>
       </Routes>
+      </UserInfoIntervalContext.Provider>
     </UserContext.Provider>
     </>
   );

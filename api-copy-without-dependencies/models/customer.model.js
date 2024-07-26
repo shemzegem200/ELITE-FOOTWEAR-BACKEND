@@ -30,9 +30,6 @@ const CustomerSchema = mongoose.Schema(
         }],
         selectedSize:[{
             type: [String]
-        }],
-        quantity:[{
-            type: Number,
         }]
 
 

@@ -1,44 +1,63 @@
 import './App.css';
-import React, { useContext, useEffect } from "react";
-import { Link, Outlet } from 'react-router-dom';
-import { UserContext } from './App';
+import React, { useContext, useEffect, useState } from "react";
+import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { UserContext, UserInfoIntervalContext } from './App';
+import {LoadingSpinner} from './components/LoadingSpinner.js';
+
 
 export function Layout() {
+    const [isLoading, setIsLoading] = useState(false);
 
     const {userInfo, setUserInfo} = useContext(UserContext);
-
+    const {userInfoInterval, sendUserInfo, startSendingUserInfo, stopSendingUserInfo} = useContext(UserInfoIntervalContext);
+    const navigate = useNavigate();
     const email = userInfo?.email;
     console.log(email);//testing
     console.log(userInfo);//testing
-
     const isAdmin = userInfo.email=='admin@gmail.com';
 
 
     async function handleLogout(){
-      const customer = await fetch(`http://localhost:4000/api/particularcustomer`,{
-        method:'POST',
-        credentials:'include',
-        body: JSON.stringify(userInfo),
-        headers: {'Content-Type': 'application/json'},
-      });
-      console.log(customer);
+      
+      try{
+        // await sendUserInfo(userInfo);
+        const customer = await fetch(`http://localhost:4000/api/particularcustomer`,{
+            method:'POST',
+            // credentials:'include',
+            body: JSON.stringify(userInfo),
+            headers: {'Content-Type': 'application/json'},
+        });
+        stopSendingUserInfo();
+        console.log(userInfo);
 
-      fetch("http://localhost:4000/api/logout",{
-        credentials: 'include',
-        method: 'POST'
-      });
-      setUserInfo('');
+        fetch("http://localhost:4000/api/logout",{
+            credentials: 'include',
+            method: 'POST'
+        });
+        setUserInfo('');
+        navigate('/login');
+      }
+      catch (error) {
+        console.error('Error during logout:', error);
+      }
     }
 
+    useEffect(() => {
+        return () => {
+          stopSendingUserInfo(); // Clean up the interval on unmount
+        };
+      }, []);
+    
+  
 
     return (
         <main>
             <header>
-                <Link to="" className="header-logo">ELITE FOOTWEAR</Link>
+                <Link to={(userInfo.email==='admin@gmail.com')? "/admin" : ""} className="header-logo">ELITE FOOTWEAR</Link>
                 <nav>
                     
                     {email &&
-                        <Link to="/" onClick={handleLogout} style={{display:'flex', alignItems:'center'}}>
+                        <Link to="/" className="log-out" onClick={handleLogout}>
                             Log out
                         </Link>
                     }
@@ -109,7 +128,8 @@ export function Layout() {
                    
                 </nav>
             </header>
-
+            
+            {isLoading && <LoadingSpinner/>}
             <div className='outer-container'>
                 <Outlet />
             </div>

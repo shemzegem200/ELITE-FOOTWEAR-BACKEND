@@ -11,16 +11,10 @@ const ShoeSchema = mongoose.Schema(
             required: true,
             default: 0
         },
-        photos: [{
-            public_id: {
-                type: String,
-                required: true
-            },
-            url: {
-                type: String,
-                required: true
-            }
-        }],
+        photos: {
+            type: [String],
+            required: false,
+        },
         category: {
             type: String,
             required: true,

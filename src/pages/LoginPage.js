@@ -1,24 +1,23 @@
 import {useState, useContext} from "react";
 import {Navigate} from "react-router-dom";
 import { UserContext } from "../App";
-
+// import { Bounce, Slide, toast } from 'react-toastify';
+import toast from "react-hot-toast";
+import { LoadingSpinner } from "../components/LoadingSpinner";
 
 
 export default function LoginPage(){
 
+    const [isLoading, setIsLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [pno, setPno] = useState('');
     const [redirect, setRedirect] = useState(false);
 
     const {userInfo, setUserInfo} = useContext(UserContext);
 
     async function login(ev){
         ev.preventDefault();
-        // if (email === 'admin@gmail.com' && password==='admin'){
-        //     setRedirect(true);
-        //     return;
-        // }
+        setIsLoading(true);
         const response = await fetch('http://localhost:4000/api/customer/login', {
             method: 'POST',
             body: JSON.stringify({email, password}),
@@ -30,18 +29,34 @@ export default function LoginPage(){
             console.log('displaying the data');
             console.log(data);
             setUserInfo({
+                    name: data.name,
                     email: email,
                     password: password,
                     phone: data.phone,
                     cart: data.cart,
                     favorites: data.favorites,
-                    selectedSize: data.selectedSize
+                    selectedSize: data.selectedSize,
+                    quantity: data.quantity
             });
+            toast.success("Logged In!");
+            setIsLoading(false);
             console.log(userInfo);
             setRedirect(true);
         }
         else{
-            alert("Wrong credentials");
+            // toast.error('Wrong Credentials', {
+            //     position: "top-center",
+            //     autoClose: 3000,
+            //     hideProgressBar: false,
+            //     closeOnClick: true,
+            //     pauseOnHover: true,
+            //     draggable: true,
+            //     progress: 0,
+            //     theme: "dark",
+            //     transition: Bounce,
+            //     });
+            toast.error('Wrong Credentials');
+            setIsLoading(false);
         }
     }
 
@@ -56,7 +71,7 @@ export default function LoginPage(){
             <h1>LOGIN</h1>
             <input 
                 type="text" 
-                placeholder="email"
+                placeholder="username"
                 value = {email}
                 onChange= {ev => setEmail(ev.target.value)}
             />
@@ -67,6 +82,8 @@ export default function LoginPage(){
                 onChange= {ev => setPassword(ev.target.value)}
             />
             <button>Login</button>
+            {isLoading && <LoadingSpinner/>}
+
         </form>
     );
 }

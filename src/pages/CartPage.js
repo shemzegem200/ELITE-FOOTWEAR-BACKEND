@@ -1,12 +1,14 @@
 import { useEffect, useState, useContext } from "react";
 import {UserContext} from "../App.js";
-import {formatISO9075} from 'date-fns';
 import { Navigate } from "react-router-dom";
-import {ConfirmOrderPopup} from "./ConfirmOrderPopup.js";
 import { useNavigate } from "react-router-dom";
+import Popup from "../components/Popup.js";
+import { LoadingSpinner } from "../components/LoadingSpinner.js";
+import toast from "react-hot-toast";
 
 
 export default function CartPage(){
+    const [isLoading, setIsLoading] = useState(false);
     const {userInfo, setUserInfo} = useContext(UserContext);
     const [redirect, setRedirect] = useState(false);
     const [cartShoes, setCartShoes] = useState([]);
@@ -17,21 +19,6 @@ export default function CartPage(){
     console.log('in cart page');
     console.log(userInfo);
     
-    function deleteItem(shoeId){
-        const updatedCart = cartShoes.filter(shoe => shoe._id !== shoeId);
-        console.log(updatedCart);
-        setCartShoes(updatedCart);
-        setUserInfo({
-            name:userInfo.name,
-            email: userInfo.email,
-            phone: userInfo.phone,
-            password:userInfo.password,
-            cart:updatedCart,
-            favorites:userInfo.favorites,
-            selectedSize: userInfo.selectedSize
-        })
-    }
-
     function getCurrentDate(days=5, separator=''){
         let newDate = new Date();
         newDate.setDate(newDate.getDate() + days);
@@ -47,9 +34,9 @@ export default function CartPage(){
         setShowPopup(false);
         //empty cart
 
-        const message = `Dear ${userInfo.name? userInfo.name : 'Customer'}, \nYou have successfully placed an order at Elite Footwear. \nHere's your order details: \n${cartShoes.map((shoe, index)=>{
-            return `${index+1}. ${shoe.name}, size:${userInfo.selectedSize[index]}\n`;
-        })}total order amount = ${cartShoes.reduce((total, shoe) => total + shoe.price, 0)} \nRegards, \nTeam Elite Footwear`;
+        // const message = `Dear ${userInfo.name? userInfo.name : 'Customer'}, \nYou have successfully placed an order at Elite Footwear. \nHere's your order details: \n${cartShoes.map((shoe, index)=>{
+        //     return `${index+1}. ${shoe.name}, size:${userInfo.selectedSize[index]}\n`;
+        // })}total order amount = ${cartShoes.reduce((total, shoe) => total + shoe.price, 0)} \nRegards, \nTeam Elite Footwear`;
         
         setUserInfo({
             name:userInfo.name,
@@ -58,7 +45,8 @@ export default function CartPage(){
             password:userInfo.password,
             cart:[],
             favorites:userInfo.favorites,
-            selectedSize: userInfo.selectedSize
+            selectedSize: userInfo.selectedSize,
+            quantity: userInfo.quantity
         });
 
         // await fetch("http://localhost:4000/api/send-email", {
@@ -80,6 +68,46 @@ export default function CartPage(){
     };
 
 
+    function DecQuantity(index){
+        let tempCart = [...userInfo.cart];
+        let tempSize = [...userInfo.selectedSize];
+        let tempQuantity = [...userInfo.quantity];
+        
+        if (--tempQuantity[index]===0){
+            tempCart.splice(index,1);
+            tempSize.splice(index,1);
+            tempQuantity.splice(index,1);
+        }
+        setUserInfo({
+            name: userInfo.name,
+            email: userInfo.email,
+            password: userInfo.password,
+            phone: userInfo.phone,
+            favorites: userInfo.favorites,
+            cart: tempCart,
+            selectedSize: tempSize,
+            quantity: tempQuantity
+        })
+    }
+
+    function IncQuantity(index){
+        let tempQuantity = [...userInfo.quantity];
+        tempQuantity[index]++;
+        
+        setUserInfo({
+            name: userInfo.name,
+            email: userInfo.email,
+            password: userInfo.password,
+            phone: userInfo.phone,
+            favorites: userInfo.favorites,
+            cart: userInfo.cart,
+            selectedSize: userInfo.selectedSize,
+            quantity: tempQuantity
+        });
+    }
+
+
+
     useEffect(()=>{
         if (!userInfo || !userInfo.email) {
             setRedirect(true);
@@ -89,7 +117,7 @@ export default function CartPage(){
             method: 'POST',
             body: JSON.stringify(userInfo.cart),
             headers: {'Content-Type': 'application/json'},
-            credentials: 'include'
+            // credentials: 'include'
         }).then(response =>{
             response.json().then(cartShoes => {
                 setCartShoes(cartShoes);
@@ -105,52 +133,65 @@ export default function CartPage(){
 
 
     async function placeOrder(){
+        setIsLoading(true);
         await fetch("http://localhost:4000/api/placeorder",{
             method:'POST',
             body: JSON.stringify({
                                     name: userInfo.name,
                                     phone: userInfo.phone,
                                     email: userInfo.email,
+                                    shoes: cartShoes,
+                                    selectedSize: userInfo.selectedSize,
+                                    quantity: userInfo.quantity,
                                     order_amt : cartShoes.reduce((total, shoe) => total + shoe.price, 0),
                                     order_date: getCurrentDate(0,'-'),
                                     delv_date: getCurrentDate(5,'-')
                                 }),
             headers: {'Content-Type': 'application/json'},
-            credentials: 'include'
+            // credentials: 'include'
         }).then(response=>{
             if (response.ok){
                 console.log('placed order successfuly');
                 console.log(response);
                 setShowPopup(true);
             }
+            else{
+                toast.error('Could not place order')
+            }
+            setIsLoading(false);
         });
     }
 
+    function getAmt(){
+        let total = 0;
+        for (let i=0; i<cartShoes.length; i++){
+            total += cartShoes[i].price*userInfo.quantity[i];
+        }
+        return total;
+    }
 
     
     return (
         <>
             <h1 style={{fontFamily:'nike-font', marginTop:'100px', textAlign:'center'}}>YOUR CART</h1>
             
-            <div className="cart-container">
+            <div  className="cart-container">
                 {cartShoes.length>0? (cartShoes.map((shoe,index) => 
-                    <div key={shoe._id} className="cart-list-item">
-                        <img src={shoe.photos[0]}/>
+                    <div key={`${shoe._id}${userInfo.selectedSize[index]}`} className="cart-list-item">
+                        <img src={shoe.photos[0].url}/>
 
                         <div style={{borderRadius:'7px', alignItems:'center',justifyContent:'center',display:'flex', flexDirection:'column'/*,textAlign:'center'*/, fontFamily:'regular-font',background:'linear-gradient(to bottom,#cdcdcdc7, white)'}}>
                             <div>Product: {shoe.name}</div>
                             <div style={{fontSize:'0.8rem'}}>Size: {userInfo.selectedSize[index]}</div>
                         </div>
 
-                        <div style={{borderRadius:'7px',alignItems:'center',justifyContent:'center',display:'flex',textAlign:'center', fontFamily:'regular-font',background:'linear-gradient(to bottom,#cdcdcdc7, white)'}}> ₹{shoe.price}</div>
+                        <div style={{borderRadius:'7px',alignItems:'center',justifyContent:'center',display:'flex',textAlign:'center', fontFamily:'regular-font',background:'linear-gradient(to bottom,#cdcdcdc7, white)'}}> ₹{shoe.price*userInfo.quantity[index]}</div>
 
-                        <div style={{borderRadius:'7px',alignItems:'center',justifyContent:'center',display:'flex',textAlign:'center', fontFamily:'regular-font',background:'linear-gradient(to bottom,#cdcdcdc7, white)', cursor:'pointer'}} onClick={() => {deleteItem(shoe._id)}}>
-                            <svg width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
-                            <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
-                            </svg>
+                        <div className="inc-dec-button" style={{display:'grid', gridTemplateColumns:'20px 20px 20px', backgroundColor:'#ccc', height:'20px', borderRadius:'5px', margin:'auto 0'}}>
+                            <button style={{display:'flex', justifyContent:'center', textAlign:'center',alignItems:'center',width:'20px', height:'20px', backgroundColor:/*'#FF033E'*/'black', color:'white', borderRadius:'5px', cursor:'pointer', fontSize:'14px', fontWeight:'bold'}} onClick={(ev)=>{DecQuantity(index)}}>-</button>
+                            <div style={{textAlign:'center', width:'20px', height:'20px', display:'flex', alignItems:'center', justifyContent:'center'}}>{userInfo.quantity[index]}</div>
+                            <button style={{display:'flex', textAlign:'center', justifyContent:'center',alignItems:'center',width:'20px', height:'20px', fontSize:'14px', fontWeight:'bold',backgroundColor:/*'#32de84'*/'black', color:'white', borderRadius:'5px', cursor:'pointer'}} onClick={(ev)=>{IncQuantity(index)}}>+</button>
                         </div>
-
 
                     </div>
                 )) : (
@@ -163,21 +204,24 @@ export default function CartPage(){
             </div>
 
             {cartShoes.length>0 &&
-                <div className="cart-amt-details" style={{marginTop:'30px', width:'60%', marginLeft:'20%'}}>
+                <div className="cart-amt-details">
                     <span style={{fontFamily:'nike-font', fontSize:'1.2rem', marginRight:'15px'}}>ORDER DATE:  </span> <span style={{fontFamily:'regular-font'}}>{getCurrentDate(0,'-')}</span><br/><br/>
                     <span style={{fontFamily:'nike-font', fontSize:'1.2rem', marginRight:'15px'}}>DELIVERY DATE:  </span> <span style={{fontFamily:'regular-font'}}>{getCurrentDate(5,'-')}</span><br/><br/>
                     
                     <span style={{fontFamily:'nike-font', fontSize:'1.2rem', marginRight:'15px'}}>TOTAL ORDER AMOUNT:  </span>
                     <span style={{ fontFamily: 'regular-font' }}>
-                        ₹{cartShoes.reduce((total, shoe) => total + shoe.price, 0)}
+                        ₹{getAmt()}
                     </span>
 
                     <button style={{width:'50%', height:'35px', borderRadius:'14px',padding:'0', border:'none',backgroundColor:'black',color:'white', fontFamily:'nike-font', marginTop:'35px', marginLeft:'25%', display:'flex', alignItems:'center', textAlign:'center', justifyContent:'center', cursor:'pointer'}} onClick={placeOrder}>PLACE ORDER</button>
-
+                    
                 </div>
             }
 
-            {showPopup && <ConfirmOrderPopup onClose={handleClosePopup} />}
+            {showPopup && <Popup msg={'🎉Order successfully placed!🎉'} onClose={handleClosePopup} />}
+
+            {isLoading && <LoadingSpinner/>}
+
         </>
     );
 }

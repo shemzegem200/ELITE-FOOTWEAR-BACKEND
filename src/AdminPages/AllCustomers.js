@@ -1,44 +1,68 @@
 import React, { useEffect, useState } from 'react';
-import {formatISO9075} from 'date-fns';
+import { formatISO9075 } from 'date-fns';
+import { LoadingSpinner } from '../components/LoadingSpinner';
 
 
 export function AllCustomers() {
-    const [cust, setCust] = useState([]);
+  const [cust, setCust] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-    useEffect(() => {
-        fetch('http://localhost:4000/api/customers')
-            .then(response => response.json())
-            .then(customers => {
-                console.log(customers);
-                setCust(customers);
-            })
-            .catch(error => console.error('Error fetching customers:', error));
-    }, []);
+  useEffect(() => {
+    setIsLoading(true);
+    fetch('http://localhost:4000/api/customers')
+      .then(response => response.json())
+      .then(customers => {
+        console.log(customers);
+        setCust(customers);
+        setIsLoading(false);
+      })
+      .catch(error => {
+        console.error('Error fetching customers:', error);
+        setIsLoading(false);
+      });
+  }, []);
 
-    return (
-        <div>
-            <h1 style={{fontFamily:'nike-font', textAlign:'center', marginTop:'100px'}}>ALL CUSTOMERS</h1>
-            
-            <div /*className="cart-container"*/>
-                        <div className='cust-list-item'>
-                            <div style={{borderRadius:'7px',alignItems:'center',justifyContent:'center',display:'flex',textAlign:'center', fontFamily:'nike-font'}}>S NO</div>
-                            <div style={{borderRadius:'7px',alignItems:'center',justifyContent:'center',display:'flex',textAlign:'center', fontFamily:'nike-font'}}>NAME</div>
-                            <div style={{borderRadius:'7px',alignItems:'center',justifyContent:'center',display:'flex',textAlign:'center', fontFamily:'nike-font'}}>EMAIL</div>
-                            <div style={{borderRadius:'7px',alignItems:'center',justifyContent:'center',display:'flex',textAlign:'center', fontFamily:'nike-font'}}>PHONE NO</div>
-                            <div style={{borderRadius:'7px',alignItems:'center',justifyContent:'center',display:'flex',textAlign:'center', fontFamily:'nike-font'}}>JOINED AT</div>
-                        </div>
-                {cust.length>0 &&
-                    cust.map((cus, index) => (
-                        <div className='cust-list-item'>
-                            <div style={{borderRadius:'7px',alignItems:'center',justifyContent:'center',display:'flex',textAlign:'center', fontFamily:'regular-font',background:'linear-gradient(to bottom,#cdcdcdc7, white)'}}>{index+1}</div>
-                            <div style={{borderRadius:'7px',alignItems:'center',justifyContent:'center',display:'flex',textAlign:'center', fontFamily:'regular-font',background:'linear-gradient(to bottom,#cdcdcdc7, white)'}}>{cus.name? cus.name : "N/A"}</div>
-                            <div style={{borderRadius:'7px',alignItems:'center',justifyContent:'center',display:'flex',textAlign:'center', fontFamily:'regular-font',background:'linear-gradient(to bottom,#cdcdcdc7, white)'}}>{cus.email}</div>
-                            <div style={{borderRadius:'7px',alignItems:'center',justifyContent:'center',display:'flex',textAlign:'center', fontFamily:'regular-font',background:'linear-gradient(to bottom,#cdcdcdc7, white)'}}>{cus.phone}</div>
-                            <div style={{borderRadius:'7px',alignItems:'center',justifyContent:'center',display:'flex',textAlign:'center', fontFamily:'regular-font',background:'linear-gradient(to bottom,#cdcdcdc7, white)'}}>{formatISO9075(cus.createdAt)}</div>
-                        </div>
-                    ))
-                }
+  if (isLoading) return (<LoadingSpinner/>);
+
+  return (
+    <div className='parent-div'>
+      <div className='top-div'>
+        <h1>ALL CUSTOMERS</h1>
+      </div>
+      <div className="container">
+        
+        {cust.length > 0? (
+          <>
+          <div className='cust-list-header'>
+            <div>S NO</div>
+            <div>NAME</div>
+            <div>EMAIL</div>
+            <div>PHONE NO</div>
+            <div>JOINED AT</div>
+          </div>
+          {cust
+            .filter(cus => cus.email !== 'admin@gmail.com')
+            .map((cus, index) => (
+              <div className='cust-list-item' key={index}>
+                <div>{index + 1}</div>
+                <div>{cus.name ? cus.name : "N/A"}</div>
+                <div>{cus.email}</div>
+                <div>{cus.phone}</div>
+                <div>{formatISO9075(cus.createdAt)}</div>
+              </div>
+            ))}
+            </>
+        )
+          : (
+            <div className="empty-cart">
+              <img src="https://cdni.iconscout.com/illustration/premium/thumb/empty-cart-5521508-4610092.png" alt="No Favorites" />
+              <div style={{textAlign:'center', fontFamily:'regular-font'}}>No Customers</div>
             </div>
-        </div>
-    );
+          )}
+      </div>
+
+    
+
+    </div>
+  );
 }

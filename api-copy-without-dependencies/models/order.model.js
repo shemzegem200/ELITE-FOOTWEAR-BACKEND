@@ -5,6 +5,11 @@ const OrdersSchema = mongoose.Schema(
         name: {
             type: String
         },
+        // cust_id:{
+        //     type: mongoose.Schema.Types.ObjectId,
+        //     ref:'Customer',
+        //     required: [true, "Please Enter Customer ID"],
+        // },
         phone:{
             type:Number,
             required: [true, "Please Enter Phone Number"],
@@ -18,18 +23,6 @@ const OrdersSchema = mongoose.Schema(
             ref: 'Product',
             required: [true, "Please Enter Shoes"],
         },
-
-        /*____________newly added cols_____________*/
-        selectedSize:{
-            type: [String],
-            required: [true, "Please Enter Sizes"]
-        },
-        quantity:{
-            type: [Number],
-            required: [true, "Please Enter Quantity"]
-        },
-        /*________________________________________ */
-
         order_amt:{
             type: Number,
             required: true,

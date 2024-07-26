@@ -3,12 +3,16 @@ import {UserContext} from "../App.js";
 import { useNavigate } from "react-router-dom";
 import { ShoeCard } from "./ShoeCard.js";
 import { Navigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { LoadingSpinner } from "../components/LoadingSpinner.js";
+
 
 export default function FavoritesPage(){
     const [favShoes, setFavShoes] = useState([]);
     const {userInfo, setUserInfo} = useContext(UserContext);
     const navigate = useNavigate();
     const [redirect, setRedirect] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
 
     useEffect(()=>{
@@ -16,15 +20,25 @@ export default function FavoritesPage(){
             setRedirect(true);
             return;
         }
+        setIsLoading(true);
         fetch("http://localhost:4000/api/customer/getfavorites",{
             method: 'POST',
             body: JSON.stringify(userInfo.favorites),
             headers: {'Content-Type': 'application/json'},
-            credentials: 'include'
+            // credentials: 'include'
         }).then(response =>{
             response.json().then(FavShoes => {
                 setFavShoes(FavShoes);
+                setIsLoading(false);
             });
+        }).catch(error=>{
+            setIsLoading(false);
+            toast(
+                `An error occurred while reaching to the server:\n${error}`,
+                {
+                  duration: 5000,
+                }
+            );
         })
     }, [userInfo]);
 
@@ -46,6 +60,9 @@ export default function FavoritesPage(){
                     </div>
                 )}
         </div>
+
+        {isLoading && <LoadingSpinner/>}
+
         </>
     );
 }

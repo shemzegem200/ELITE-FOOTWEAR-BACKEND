@@ -1,32 +1,22 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { Outlet, Link, useNavigate } from "react-router-dom";
 
 export function MainPage(){
-    const navigate=useNavigate();
-    const navallcust=()=>{
-        navigate("/all-cust");
-    };
-    const navallord=()=>{
-        navigate("/all-orders");
-    };
-    function navadditem(){
-        navigate("/add-item");
-    }
-    function navdelitem(){
-        navigate("/del-item");
-    }
-
+  const navigate = useNavigate();  
 
     return (
-
-
-        <div className="adminbuttoncontainer">
-                <button className="allcust" onClick={navallcust} style={{backgroundColor:"white", fontFamily:"nike-font",fontSize:"2rem",borderRadius:"19px", margin:'0', padding:'0', boxShadow:'0 0 20px rgba(0, 0, 0, 0.3)', border:'none', cursor:'pointer'}}>View Customers</button>
-                <button className="allord" onClick={navallord} style={{backgroundColor:"white", fontFamily:"nike-font",fontSize:"2rem",borderRadius:"19px", margin:'0', padding:'0', boxShadow:'0 0 20px rgba(0, 0, 0, 0.3)', border:'none', cursor:'pointer'}}>View Orders</button>
-                <button className="additem" onClick={navadditem} style={{backgroundColor:"white", fontFamily:"nike-font",fontSize:"2rem",borderRadius:"19px", margin:'0', padding:'0', boxShadow:'0 0 20px rgba(0, 0, 0, 0.3)', border:'none', cursor:'pointer'}}>Add Item</button>
-                <button className="delitem" onClick={navdelitem} style={{backgroundColor:"white", fontFamily:"nike-font",fontSize:"2rem",borderRadius:"19px", margin:'0', padding:'0', boxShadow:'0 0 20px rgba(0, 0, 0, 0.3)', border:'none', cursor:'pointer'}}>Delete Item</button>
-        </div>
-    );
-
-
+          <div className="outercontainer">
+            <div className="navbar">
+              <Link to="/admin/all-cust" className="butstyle">View Customers</Link>
+              <Link to="/admin/all-orders" className="butstyle">View Orders</Link>
+              <Link to="/admin/add-item" className="butstyle">Add Item</Link>
+              <Link to="/admin/upd-item" className="butstyle">Update Item</Link>
+              <Link to="/admin/del-item" className="butstyle">Delete Item</Link>
+              <Link to="/admin/show-pop" className="butstyle">Popular Items</Link>
+            </div>
+            <div className="display">
+                <Outlet/>
+            </div>
+          </div>
+      );
 }
-

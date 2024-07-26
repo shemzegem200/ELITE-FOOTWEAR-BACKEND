@@ -1,83 +1,77 @@
-import { useState } from 'react';
-import {ShopPage} from '../pages/ShopPage';
-import { ShoeCard } from '../pages/ShoeCard';
-import { useNavigate } from 'react-router-dom';
-
-export function DelItemPage(){
-    const [id, setId] = useState('');
-    const [shoe, setShoe] = useState(null);
-    const [searching, setSearching] = useState(false);
-    const [redirect, setRedirect] = useState(false);
+import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
+import { LoadingSpinner } from '../components/LoadingSpinner';
 
 
-    const handleSubmit = async(event) => {
-        event.preventDefault();
-        // handle form submission
-        setSearching(true);
-        // Post the formData to the server
-        await fetch(`http://localhost:4000/api/product/${id}`)
-            .then((response) => response.json())
-            .then((data) => {
-                setShoe(data);
-                setSearching(false);
+export function DelItemPage() {
+    const [isLoading, setIsLoading] = useState(false);
+
+    const [productId, setProductId] = useState('');
+    const [products, setProducts] = useState([]);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        setIsLoading(true);
+        fetch('http://localhost:4000/api/products')
+            .then(response => response.json())
+            .then(data => {
+                setProducts(data);
+                setIsLoading(false);
             })
-            .catch((error) => {
-                console.log(error);
-                setSearching(false);
+            .catch(error => {
+                console.error('Error fetching products:', error);
+                setIsLoading(false);
+            });
+    }, []);
+
+    const deleteProduct = async (ev) => {
+        ev.preventDefault();
+        setError('');
+        try {
+            setIsLoading(true);
+            const response = await fetch(`https://online-shopping-shoes-backend-4.onrender.com/api/product/${productId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
             });
 
-
-        setRedirect(true);
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || 'Failed to delete product');
+            }
+            toast.success('Product deleted successfully');
+            setProducts(products.filter(product => product._id !== productId)); // Update the product list
+            setProductId('');
+        } catch (error) {
+            console.error('Error deleting product:', error);
+            setError(error.message || 'Error deleting product');
+        } finally{
+            setIsLoading(false);
+        }
     };
 
-
-    async function deleteShoe(){
-        await fetch(`http://localhost:4000/api/product/${id}`,{
-            method:'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-            .then((response) => response.json())
-            .then((data) => {
-                console.log('Item deleting:', data);
-            })
-            .catch((error) => {
-                console.error('Error adding item:', error);
-                setSearching(false);
-            });
-
+    return (<>
+        <h1>DELETE ITEM</h1>
+        <form onSubmit={deleteProduct} className='emailform'>
+            {error && <p className="error">{error}</p>}
+            <div className='email-form-data-input-section'>
+                <label>Select Product:  </label>
+                <select
+                    value={productId}
+                    onChange={(ev) => setProductId(ev.target.value)}
+                    required
+                >
+                    <option value="">Select a product</option>
+                    {products.map((product) => (
+                        <option key={product._id} value={product._id}>{product.name}</option>
+                    ))}
+                </select>
+            </div>
+            <button type="submit" className="submit-contact-form" disabled={isLoading}>{isLoading? "Deleting..." : "Delete Product"}</button>
             
-    }
-    
+            {isLoading && <LoadingSpinner/>}
 
-
-    return(
-    <>
-        <h1 style={{fontFamily:'nike-font', textAlign:'center', marginTop:'100px'}}>DELETE ITEM</h1>
-            <form onSubmit={handleSubmit} className='emailform'>
-                <div className='email-form-data-input-section'>
-                    <label>Shoe ID:</label>
-                    <input
-                        type="text"
-                        value={id}
-                        onChange={(e) => setId(e.target.value)}
-                        required
-                    />
-                </div>
-                <div style={{display:'flex', alignItems:'center', justifyContent:'center'}}>
-                    {(searching)? (
-                        <>Loading...</>) : 
-                    (shoe)? (
-                            <ShoeCard key={shoe._id} shoe={shoe}/>
-                        ) : (
-                            <>Not Found</>
-                        )
-                    }
-                </div>
-
-                <button type="submit" className='submit-contact-form' onClick={deleteShoe}>DELETE</button>
-            </form>
-    </>
+        </form></>
     );
 }

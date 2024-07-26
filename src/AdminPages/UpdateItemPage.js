@@ -5,6 +5,7 @@ import DropZone from '../components/DropBox';
 import Popup from '../components/Popup.js';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import {ShoeCard} from '../pages/ShoeCard.js';
 import { LoadingSpinner } from '../components/LoadingSpinner.js';
 
 
@@ -30,32 +31,31 @@ const formats = [
     'size', 'color', 'background'
 ];
 
-export function AddItemPage() {
+export function UpdateItemPage() {
     const [isLoading, setIsLoading] = useState(false);
 
     const [loading, setLoading] = useState(false);
+    const [showPopup, setShowPopup] = useState(false);
+
+
+    const [shoe, setShoe] = useState(null);
     const [name, setName] = useState('');
+    const [newname, setNewname] = useState('');
     const [sizes, setSizes] = useState(['']);
     const [category, setCategory] = useState('');
     const [description, setDescription] = useState('');
     const [price, setPrice] = useState('');
     const [files, setFiles] = useState([]);
-    const [showpopUp, setShowPopup] = useState(false);
-    const navigate = useNavigate();
     const [isFileValid, setIsFileValid] = useState(true);
 
-    //testing
-    useEffect(() => {
-        console.log(files);
-    }, [files]);
 
-    //close the popup
+    const navigate = useNavigate();
+
+
     const handleClosePopup = () => {
         setShowPopup(false);
-        // Navigate to index page or perform any other action
-        navigate("/admin");// Navigate to the index page
+        navigate("/admin");
     };
-
 
     const handleAddSize = () => {
         setSizes([...sizes, '']);
@@ -72,7 +72,7 @@ export function AddItemPage() {
         }
     };
 
-    function handleDescriptionChange(htmlContent){
+    function handleDescriptionChange(htmlContent) {
         let s = "";
         let count = 0;
         let flag = true;
@@ -112,22 +112,25 @@ export function AddItemPage() {
         }
         setLoading(true);
 
-        setIsLoading(true);
+        const filesToConvert = files.filter(file => !file.url); //Cloudinary URLs have a url property
+        const photosBase64 = await Promise.all(filesToConvert.map(file => convertToBase64(file)));
 
-        // Convert files to Base64
-        const photosBase64 = await Promise.all(files.map(file => convertToBase64(file)));
+        // Get URLs for Cloudinary files
+        const cloudinaryFiles = files.filter(file => file.url).map(file => file.url);
+        const allPhotos = [...cloudinaryFiles, ...photosBase64];
+        
 
         const formData = {
-            name,
+            name: newname,
             sizes,
             category,
-            description:handleDescriptionChange(description),
+            description: handleDescriptionChange(description),
             price,
-            photos: photosBase64
+            photos: allPhotos
         };
 
-        fetch('http://localhost:4000/api/products', {
-            method: 'POST',
+        fetch(`http://localhost:4000/api/product/${shoe._id}`, {
+            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -135,40 +138,118 @@ export function AddItemPage() {
         })
             .then(response => response.json())
             .then(data => {
-                console.log('Item added:', data);
+                console.log('Item updated:', data);
                 setLoading(false);
                 setShowPopup(true);
-
-                setIsLoading(false);
             })
-            .catch(error => {
-                console.error('Error adding item:', error);
-                setIsLoading(false);
-            });
+            .catch(error => console.error('Error updating item:', error));
     };
 
-    function submitButton(){
-        if (!isFileValid){
-            toast.error("You must upload atleast 1 file!");
+    function submitButton() {
+        if (!isFileValid) {
+            toast.error("You must upload at least 1 file!");
         }
     }
 
+    //testing
+    useEffect(()=>{
+        console.log(shoe);
+        if (shoe){
+            setNewname(shoe.name);
+            setSizes(shoe.sizes);
+            setCategory(shoe.category);
+            setDescription(shoe.description);
+            setPrice(shoe.price);
+            setFiles(shoe.photos); 
+        }
+        else{
+            setNewname('');
+            setSizes(['']);
+            setCategory('');
+            setDescription('');
+            setPrice('');
+            setFiles([]); 
+        }
+        console.log(newname);
+        console.log(sizes);
+        console.log(category);
+        console.log(description);
+        console.log(price);
+        console.log(files);
+               
+    }, [shoe]);
+
+    useEffect(()=>{console.log(files)}, [files])
+
+
+
+    // Perform exact search
+    function OnChangeName(query) {
+        setName(query);
+        if (query==='' || query===' '){
+            setNewname('');
+            setSizes([]);
+            setCategory('');
+            setDescription('');
+            setPrice('');
+            setFiles([]); 
+            return;
+        }
+        fetch('http://localhost:4000/api/exactsearch', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ query: query })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => {
+            setShoe(data);
+        })
+        .catch(error => {
+            console.log(`Could not find shoe`);
+            setShoe(null);
+        });
+    }
+    
+
     return (
         <>
-            <h1 style={{ fontFamily: 'nike-font', textAlign: 'center'/*, marginTop: '100px'*/ }}>ADD ITEM</h1>
+            <h1 style={{ fontFamily: 'nike-font', textAlign: 'center' }}>UPDATE ITEM</h1>
+
             <form onSubmit={handleSubmit} className='emailform'>
                 <div className='email-form-data-input-section'>
-                    <label>Shoe Name:</label>
+                    <label> Enter shoe Name or ID: </label>
                     <input
                         type="text"
                         value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        onChange={(e) => OnChangeName(e.target.value)}
+                        required
+                    />
+                </div>
+
+                {(shoe && name!=='') && <div style={{display:'flex', alignItems:'center',justifyContent:'center'}}><ShoeCard shoe={shoe}/></div>}
+
+                <div className='email-form-data-input-section'>
+                    <label>New name:  </label>
+                    <input
+                        type="text"
+                        value={newname}
+                        onChange={(e) => setNewname(e.target.value)}
                         required
                     />
                 </div>
 
                 <div className='email-form-data-input-section'>
-                    <div style={{display:'flex', gap:'20px', alignItems:'center', marginBottom:'5px'}}><label>Shoe Sizes</label>                    <button type="button" onClick={handleAddSize} style={{display:'flex', textAlign:'center', justifyContent:'center',alignItems:'center',width:'30px', height:'30px', fontSize:'20px', fontWeight:'bold',backgroundColor:'#32de84', color:'white', borderRadius:'9px'}}>+</button></div>
+                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '5px' }}>
+                        <label>Shoe Sizes</label>
+                        <button type="button" onClick={handleAddSize} style={{ display: 'flex', textAlign: 'center', justifyContent: 'center', alignItems: 'center', width: '30px', height: '30px', fontSize: '20px', fontWeight: 'bold', backgroundColor: '#32de84', color: 'white', borderRadius: '9px' }}>+</button>
+                    </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         {sizes.map((size, index) => (
@@ -179,7 +260,7 @@ export function AddItemPage() {
                                     onChange={(e) => handleSizeChange(index, e.target.value)}
                                     required
                                 />
-                                {sizes.length > 1 && (
+                               {sizes.length > 1 && (
                                     <button type="button" onClick={() => handleRemoveSize(index)} style={{display:'flex', justifyContent:'center', textAlign:'center',alignItems:'center',width:'30px', height:'30px', backgroundColor:'#FF033E', color:'white', borderRadius:'9px'}}>
                                         <svg width="30px" height="30px" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
                                         <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
@@ -234,10 +315,11 @@ export function AddItemPage() {
                            isRequired={true} />
                 </div>
 
-                {/* {!isFileValid && <p style={{fontSize:'0.6rem', color:'red'}}>Please upload at least one file.</p>} */}
-                <button type="submit" className='submit-contact-form' disabled={loading} onClick={submitButton}>{`${loading? "Adding Item...": "Add Item"}`}</button>
+                <button type="submit" className='submit-contact-form' disabled={loading} onClick={submitButton}>{loading? "Updating Item...": "Update Item"}</button>
             </form>
-            {showpopUp && <Popup msg={'🎉Successfully Added Item!🎉'} onClose={handleClosePopup} />}
+
+            {showPopup && <Popup msg={'🎉Successfully Updated Item!🎉'} onClose={handleClosePopup} />}
+
             {isLoading && <LoadingSpinner/>}
 
         </>
